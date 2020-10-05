@@ -21,6 +21,8 @@
 // -----------------------------------------------------------------------------
 var fs = require('fs'); // for storing client key
 // var http = require('http'); // for communication with Kodi
+var { homedir } = require('os');
+var path = require('path');
 
 // var WebSocket = require('ws'); 
 var WebSocketClient = require('websocket').client; // for communication with TV
@@ -37,7 +39,7 @@ eventemitter.setMaxListeners(0); // enable infinite number of listeners
 var wsurl = 'ws://lgsmarttv.lan:3000';
 
 // once connected, store client key (retrieved from TV) in this file
-var client_key_filename = "./client-key.txt";
+var client_key_filename = "/.client-key.txt";
 
 // bool for callbacks
 var RESULT_ERROR = true;
@@ -57,8 +59,9 @@ var hello_w_key = "{\"type\":\"register\",\"id\":\"register_0\",\"payload\":{\"f
 // ---------------------------------------------------------
 // get the handshake string used for setting up the ws connection
 function get_handshake() {
-  if (fs.existsSync(client_key_filename)) {
-    var ck = fs.readFileSync(client_key_filename);
+  const filepath = path.join(homedir() + client_key_filename);
+  if (fs.existsSync(filepath)) {
+    var ck = fs.readFileSync(filepath);
     console.log("Client key:" + ck);
     return hello_w_key.replace("CLIENTKEYGOESHERE", ck);
 
@@ -70,8 +73,9 @@ function get_handshake() {
 // ---------------------------------------------------------
 // store the client key on disk so that we don't have to pair next time
 function store_client_key(ck) {
+  const filepath = path.join(homedir() + client_key_filename);
   console.log("Storing client key:" + ck);
-  fs.writeFileSync(client_key_filename, ck);
+  fs.writeFileSync(filepath, ck);
 }
 /*---------------------------------------------------------------------------*/
 client.on('connectFailed', function(error) {
