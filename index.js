@@ -194,7 +194,7 @@ var _send_ssdp_discover = function(socket)
   ssdp_msg += 'MX: 5\r\n';
   ssdp_msg += "ST: urn:dial-multiscreen-org:service:dial:1\r\n";
   ssdp_msg += "USER-AGENT: iOS/5.0 UDAP/2.0 iPhone/4\r\n\r\n";
-  var message = new Buffer(ssdp_msg);
+  var message = Buffer.from(ssdp_msg);
 
   socket.send(message, 0, message.length, ssdp_rport, ssdp_rhost, function(err, bytes) {
       if (err) throw err;
@@ -233,12 +233,17 @@ var discover_ip = function(retry_timeout_seconds, tv_ip_found_callback)
 
   // scan incoming messages for the magic string, close when we've got it
   server.on('message', function(message, remote) {
-    if (message.indexOf("LG Smart TV") >= 0) {
+    if (/(webos|lg)/gi.test(message.toString())) {
+      // server.close();
       if (cb) {
         cb(false, remote.address);
-        // server.close();
       }
     }
+  });
+
+  server.on('error', (err) => {
+    console.log(`server error:\n${err.stack}`);
+    server.close();
   });
   
   server.bind(); // listen to 0.0.0.0:random
@@ -350,7 +355,7 @@ var connect = function(host, fn) {
         eventemitter.on("register_0", function (message) {
           var ck = message.payload["client-key"];
           if (typeof ck === 'undefined') {
-
+            fn(RESULT_ERROR, 'TV permission denied');
           } else {
             store_client_key(ck);
             handshaken = true;
